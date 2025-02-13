@@ -35,3 +35,34 @@ class ObrigacaoAcessoria(Base):
     periodicidade = Column(String, nullable=False)
     empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
     empresa = relationship("Empresa", back_populates="obrigacoes")
+
+# inicializacao Pydantic
+class EmpresaBase(BaseModel):
+    nome: str
+    cnpj: str
+    endereco: str
+    email: EmailStr
+    telefone: str
+
+class EmpresaCreate(EmpresaBase):
+    pass
+
+class EmpresaResponse(EmpresaBase):
+    id: int
+
+    class Config:
+        orm_mode = True
+
+class ObrigacaoBase(BaseModel):
+    nome: str
+    periodicidade: str
+    empresa_id: int
+
+class ObrigacaoCreate(ObrigacaoBase):
+    pass
+
+class ObrigacaoResponse(ObrigacaoBase):
+    id: int
+
+    class Config:
+        orm_mode = True
