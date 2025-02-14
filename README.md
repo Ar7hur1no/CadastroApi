@@ -3,4 +3,5 @@ empresas e gerenciar obrigações acessórias que a empresa precisa declarar par
 governo.
 
 Para rodar use: 
-uvicorn main:app --reload
+
+```uvicorn main:app --reload```
