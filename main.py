@@ -36,7 +36,7 @@ class ObrigacaoAcessoria(Base):
     empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
     empresa = relationship("Empresa", back_populates="obrigacoes")
 
-# inicializacao Pydantic
+# Schemas Pydantic
 class EmpresaBase(BaseModel):
     nome: str
     cnpj: str
@@ -66,3 +66,49 @@ class ObrigacaoResponse(ObrigacaoBase):
 
     class Config:
         orm_mode = True
+
+# Dependência de sessão do banco de dados
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+# Criar a API
+app = FastAPI()
+
+# Endpoints CRUD para Empresas
+@app.post("/empresas/", response_model=EmpresaResponse)
+def create_empresa(empresa: EmpresaCreate, db: Session = Depends(get_db)):
+    db_empresa = Empresa(**empresa.dict())
+    db.add(db_empresa)
+    db.commit()
+    db.refresh(db_empresa)
+    return db_empresa
+
+@app.get("/empresas/{empresa_id}", response_model=EmpresaResponse)
+def get_empresa(empresa_id: int, db: Session = Depends(get_db)):
+    empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
+    if empresa is None:
+        raise HTTPException(status_code=404, detail="Empresa não encontrada")
+    return empresa
+
+# Endpoints CRUD para Obrigações Acessórias
+@app.post("/obrigacoes/", response_model=ObrigacaoResponse)
+def create_obrigacao(obrigacao: ObrigacaoCreate, db: Session = Depends(get_db)):
+    db_obrigacao = ObrigacaoAcessoria(**obrigacao.dict())
+    db.add(db_obrigacao)
+    db.commit()
+    db.refresh(db_obrigacao)
+    return db_obrigacao
+
+@app.get("/obrigacoes/{obrigacao_id}", response_model=ObrigacaoResponse)
+def get_obrigacao(obrigacao_id: int, db: Session = Depends(get_db)):
+    obrigacao = db.query(ObrigacaoAcessoria).filter(ObrigacaoAcessoria.id == obrigacao_id).first()
+    if obrigacao is None:
+        raise HTTPException(status_code=404, detail="Obrigação não encontrada")
+    return obrigacao
+
+# Criar tabelas no banco de dados
+Base.metadata.create_all(bind=engine)
